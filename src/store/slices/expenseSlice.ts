@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import { apiService } from '../../services/api';
 
 interface Expense {
   id: number;
@@ -27,27 +27,39 @@ const initialState: ExpenseState = {
 export const fetchExpenses = createAsyncThunk(
   'expense/fetchExpenses',
   async (employeeId?: number) => {
-    const url = employeeId 
-      ? `http://localhost:3001/expenses?employeeId=${employeeId}`
-      : 'http://localhost:3001/expenses';
-    const response = await axios.get(url);
-    return response.data;
+    const expenses = await apiService.getExpenses(employeeId);
+    return expenses;
   }
 );
 
 export const createExpense = createAsyncThunk(
   'expense/createExpense',
   async (expenseData: Omit<Expense, 'id'>) => {
-    const response = await axios.post('http://localhost:3001/expenses', expenseData);
-    return response.data;
+    // Since external API is read-only, we'll create a mock expense with a new ID
+    const mockExpense: Expense = {
+      ...expenseData,
+      id: Date.now(), // Generate a temporary ID
+      status: 'pending' as const
+    };
+    return mockExpense;
   }
 );
 
 export const updateExpenseStatus = createAsyncThunk(
   'expense/updateExpenseStatus',
   async ({ id, status }: { id: number; status: 'approved' | 'rejected' }) => {
-    const response = await axios.patch(`http://localhost:3001/expenses/${id}`, { status });
-    return response.data;
+    // Since external API is read-only, we'll return a mock updated expense
+    const mockUpdatedExpense = {
+      id,
+      status,
+      // Add other required fields with mock data
+      employeeId: 1,
+      date: new Date().toISOString().split('T')[0],
+      description: 'Updated expense',
+      category: 'General',
+      amount: 0
+    };
+    return mockUpdatedExpense;
   }
 );
 

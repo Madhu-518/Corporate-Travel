@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import { apiService } from '../../services/api';
 
 interface User {
   id: number;
@@ -42,8 +42,7 @@ export const login = createAsyncThunk(
   'auth/login',
   async (credentials: { email: string; password: string }, { rejectWithValue }) => {
     try {
-      const response = await axios.get(`http://localhost:3001/users?email=${credentials.email}`);
-      const users = response.data;
+      const users = await apiService.getUserByEmail(credentials.email);
       
       if (users.length === 0) {
         return rejectWithValue('User not found');

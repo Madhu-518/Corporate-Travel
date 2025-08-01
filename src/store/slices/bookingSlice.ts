@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import { apiService } from '../../services/api';
 
 interface Booking {
   id: number;
@@ -71,40 +71,45 @@ const initialState: BookingState = {
 export const fetchBookings = createAsyncThunk(
   'booking/fetchBookings',
   async (employeeId: number) => {
-    const response = await axios.get(`http://localhost:3001/bookings?employeeId=${employeeId}`);
-    return response.data;
+    const bookings = await apiService.getBookings(employeeId);
+    return bookings;
   }
 );
 
 export const fetchFlights = createAsyncThunk(
   'booking/fetchFlights',
   async () => {
-    const response = await axios.get('http://localhost:3001/flights');
-    return response.data;
+    const flights = await apiService.getFlights();
+    return flights;
   }
 );
 
 export const fetchHotels = createAsyncThunk(
   'booking/fetchHotels',
   async () => {
-    const response = await axios.get('http://localhost:3001/hotels');
-    return response.data;
+    const hotels = await apiService.getHotels();
+    return hotels;
   }
 );
 
 export const fetchPickups = createAsyncThunk(
   'booking/fetchPickups',
   async () => {
-    const response = await axios.get('http://localhost:3001/pickups');
-    return response.data;
+    const pickups = await apiService.getPickups();
+    return pickups;
   }
 );
 
 export const createBooking = createAsyncThunk(
   'booking/createBooking',
   async (bookingData: Omit<Booking, 'id'>) => {
-    const response = await axios.post('http://localhost:3001/bookings', bookingData);
-    return response.data;
+    // Since external API is read-only, we'll create a mock booking with a new ID
+    const mockBooking: Booking = {
+      ...bookingData,
+      id: Date.now(), // Generate a temporary ID
+      status: 'confirmed' as const
+    };
+    return mockBooking;
   }
 );
 

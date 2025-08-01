@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import { apiService } from '../../services/api';
 
 interface Employee {
   id: number;
@@ -46,45 +46,64 @@ const initialState: ManagerState = {
 export const fetchEmployees = createAsyncThunk(
   'manager/fetchEmployees',
   async () => {
-    const response = await axios.get('http://localhost:3001/employees');
-    return response.data;
+    const employees = await apiService.getEmployees();
+    return employees;
   }
 );
 
 export const fetchExpenses = createAsyncThunk(
   'manager/fetchExpenses',
   async () => {
-    const response = await axios.get('http://localhost:3001/expenses');
-    return response.data;
+    const expenses = await apiService.getExpenses();
+    return expenses;
   }
 );
 
 export const updateEmployeeBudget = createAsyncThunk(
   'manager/updateEmployeeBudget',
   async ({ id, budget }: { id: number; budget: number }) => {
-    const response = await axios.patch(`http://localhost:3001/employees/${id}`, { budget });
-    return response.data;
+    // Since external API is read-only, we'll return a mock updated employee
+    const mockUpdatedEmployee = {
+      id,
+      budget,
+      // Add other required fields with mock data
+      name: 'Updated Employee',
+      email: 'employee@example.com',
+      department: 'General',
+      usedBudget: 0,
+      walletBalance: 0,
+      rewardPoints: 0
+    };
+    return mockUpdatedEmployee;
   }
 );
 
 export const updateExpenseStatus = createAsyncThunk(
   'manager/updateExpenseStatus',
   async ({ id, status }: { id: string; status: 'approved' | 'rejected' }) => {
-    const response = await axios.patch(`http://localhost:3001/expenses/${id}`, { status });
-    return response.data;
+    // Since external API is read-only, we'll return a mock updated expense
+    const mockUpdatedExpense = {
+      id,
+      status,
+      // Add other required fields with mock data
+      employeeId: '1',
+      employeeName: 'Updated Employee',
+      description: 'Updated expense',
+      amount: 0,
+      category: 'General',
+      date: new Date().toISOString().split('T')[0]
+    };
+    return mockUpdatedExpense;
   }
 );
 
 export const fetchManagerStats = createAsyncThunk(
   'manager/fetchManagerStats',
   async () => {
-    const [employeesResponse, expensesResponse] = await Promise.all([
-      axios.get('http://localhost:3001/employees'),
-      axios.get('http://localhost:3001/expenses')
+    const [employees, expenses] = await Promise.all([
+      apiService.getEmployees(),
+      apiService.getExpenses()
     ]);
-    
-    const employees = employeesResponse.data;
-    const expenses = expensesResponse.data;
     
     const totalTeamBudget = employees.reduce((sum: number, emp: Employee) => sum + emp.budget, 0);
     const totalExpenses = expenses.reduce((sum: number, exp: any) => sum + exp.amount, 0);
