@@ -1,15 +1,69 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'https://corporate-travel-api.onrender.com/data';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+if (!API_BASE_URL) {
+  throw new Error('❌ VITE_API_BASE_URL is not defined in the environment variables');
+}
+
+interface User {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+}
+
+interface Employee {
+  id: number;
+  name: string;
+  userId: number;
+}
+
+interface Expense {
+  id: number;
+  employeeId: number;
+  amount: number;
+  description: string;
+  status: string;
+}
+
+interface Booking {
+  id: number;
+  employeeId: number;
+  hotelId?: number;
+  flightId?: number;
+  pickupId?: number;
+  date: string;
+}
+
+interface Flight {
+  id: number;
+  flightNumber: string;
+  origin: string;
+  destination: string;
+}
+
+interface Hotel {
+  id: number;
+  name: string;
+  location: string;
+}
+
+interface Pickup {
+  id: number;
+  employeeId: number;
+  pickupLocation: string;
+  pickupTime: string;
+}
 
 interface ApiData {
-  users: any[];
-  employees: any[];
-  expenses: any[];
-  bookings: any[];
-  flights: any[];
-  hotels: any[];
-  pickups: any[];
+  users: User[];
+  employees: Employee[];
+  expenses: Expense[];
+  bookings: Booking[];
+  flights: Flight[];
+  hotels: Hotel[];
+  pickups: Pickup[];
 }
 
 // Cache the API data to avoid multiple requests
@@ -19,81 +73,78 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 const fetchApiData = async (): Promise<ApiData> => {
   const now = Date.now();
-  
-  // Return cached data if it's still valid
+
+  // Return cached data if valid
   if (cachedData && (now - lastFetchTime) < CACHE_DURATION) {
     return cachedData;
   }
-  
+
   try {
-    const response = await axios.get(API_BASE_URL);
+    const response = await axios.get<ApiData>(API_BASE_URL);
     cachedData = response.data;
     lastFetchTime = now;
     return cachedData;
   } catch (error) {
-    console.error('Failed to fetch API data:', error);
-    throw error;
+    console.error('❌ Failed to fetch API data:', error);
+    throw new Error('Unable to load API data');
   }
 };
 
-// API functions for different data types
 export const apiService = {
   // Users
-  getUsers: async () => {
+  getUsers: async (): Promise<User[]> => {
     const data = await fetchApiData();
     return data.users;
   },
-  
-  getUserByEmail: async (email: string) => {
+
+  getUserByEmail: async (email: string): Promise<User[]> => {
     const data = await fetchApiData();
     return data.users.filter(user => user.email === email);
   },
-  
+
   // Employees
-  getEmployees: async () => {
+  getEmployees: async (): Promise<Employee[]> => {
     const data = await fetchApiData();
     return data.employees;
   },
-  
+
   // Expenses
-  getExpenses: async (employeeId?: number) => {
+  getExpenses: async (employeeId?: number): Promise<Expense[]> => {
     const data = await fetchApiData();
-    if (employeeId) {
-      return data.expenses.filter(expense => expense.employeeId === employeeId);
-    }
-    return data.expenses;
+    return employeeId
+      ? data.expenses.filter(expense => expense.employeeId === employeeId)
+      : data.expenses;
   },
-  
+
   // Bookings
-  getBookings: async (employeeId?: number) => {
+  getBookings: async (employeeId?: number): Promise<Booking[]> => {
     const data = await fetchApiData();
-    if (employeeId) {
-      return data.bookings.filter(booking => booking.employeeId === employeeId);
-    }
-    return data.bookings;
+    return employeeId
+      ? data.bookings.filter(booking => booking.employeeId === employeeId)
+      : data.bookings;
   },
-  
+
   // Flights
-  getFlights: async () => {
+  getFlights: async (): Promise<Flight[]> => {
     const data = await fetchApiData();
     return data.flights;
   },
-  
+
   // Hotels
-  getHotels: async () => {
+  getHotels: async (): Promise<Hotel[]> => {
     const data = await fetchApiData();
     return data.hotels;
   },
-  
+
   // Pickups
-  getPickups: async () => {
+  getPickups: async (): Promise<Pickup[]> => {
     const data = await fetchApiData();
     return data.pickups;
   },
-  
-  // Clear cache (useful for testing or forcing refresh)
-  clearCache: () => {
+
+  // Clear cache manually
+  clearCache: (): void => {
     cachedData = null;
     lastFetchTime = 0;
   }
-}; 
+};
